@@ -1,5 +1,16 @@
 const express = require('express');
 
+function parseTags(row) {
+  if (row && row.tags) {
+    try {
+      row.tags = JSON.parse(row.tags);
+    } catch (e) {
+      row.tags = [];
+    }
+  }
+  return row;
+}
+
 /**
  * 节日 CRUD 路由
  * @param {import('better-sqlite3').Database} db
@@ -18,23 +29,51 @@ function createFestivalRouter(db) {
   });
 
   /**
-   * 获取节日列表，支持地区筛选
+   * 获取标签列表（用于筛选）
+   */
+  router.get('/tags', (_req, res) => {
+    const rows = db
+      .prepare('SELECT tags FROM festivals WHERE tags IS NOT NULL AND tags != \'[]\'')
+      .all();
+    const tagSet = new Set();
+    for (const row of rows) {
+      try {
+        const tags = JSON.parse(row.tags);
+        for (const tag of tags) {
+          tagSet.add(tag);
+        }
+      } catch (e) {
+        // 忽略解析错误
+      }
+    }
+    const tagList = Array.from(tagSet).sort();
+    res.json(tagList);
+  });
+
+  /**
+   * 获取节日列表，支持地区和标签筛选
    */
   router.get('/', (req, res) => {
-    const { region } = req.query;
+    const { region, tag } = req.query;
+
+    let sql = 'SELECT * FROM festivals WHERE 1=1';
+    const params = [];
 
     if (region) {
-      const rows = db
-        .prepare(
-          'SELECT * FROM festivals WHERE region = ? ORDER BY id ASC'
-        )
-        .all(region);
-      return res.json(rows);
+      sql += ' AND region = ?';
+      params.push(region);
     }
 
-    const rows = db
-      .prepare('SELECT * FROM festivals ORDER BY id ASC')
-      .all();
+    sql += ' ORDER BY id ASC';
+
+    let rows = db.prepare(sql).all(...params).map(parseTags);
+
+    if (tag) {
+      rows = rows.filter((row) => {
+        return Array.isArray(row.tags) && row.tags.includes(tag);
+      });
+    }
+
     res.json(rows);
   });
 
@@ -50,31 +89,33 @@ function createFestivalRouter(db) {
       return res.status(404).json({ message: '节日不存在' });
     }
 
-    res.json(row);
+    res.json(parseTags(row));
   });
 
   /**
    * 新增节日
    */
   router.post('/', (req, res) => {
-    const { name, region, date_description, custom_summary, source } = req.body;
+    const { name, region, date_description, custom_summary, source, tags = [] } = req.body;
 
     if (!name || !region || !date_description || !custom_summary || !source) {
       return res.status(400).json({ message: '请填写全部字段' });
     }
 
+    const tagsJson = JSON.stringify(Array.isArray(tags) ? tags : []);
+
     const result = db
       .prepare(
-        `INSERT INTO festivals (name, region, date_description, custom_summary, source)
-         VALUES (?, ?, ?, ?, ?)`
+        `INSERT INTO festivals (name, region, date_description, custom_summary, source, tags)
+         VALUES (?, ?, ?, ?, ?, ?)`
       )
-      .run(name, region, date_description, custom_summary, source);
+      .run(name, region, date_description, custom_summary, source, tagsJson);
 
     const created = db
       .prepare('SELECT * FROM festivals WHERE id = ?')
       .get(result.lastInsertRowid);
 
-    res.status(201).json(created);
+    res.status(201).json(parseTags(created));
   });
 
   /**
@@ -88,21 +129,23 @@ function createFestivalRouter(db) {
       return res.status(404).json({ message: '节日不存在' });
     }
 
-    const { name, region, date_description, custom_summary, source } = req.body;
+    const { name, region, date_description, custom_summary, source, tags = [] } = req.body;
 
     if (!name || !region || !date_description || !custom_summary || !source) {
       return res.status(400).json({ message: '请填写全部字段' });
     }
 
+    const tagsJson = JSON.stringify(Array.isArray(tags) ? tags : []);
+
     db.prepare(
       `UPDATE festivals
        SET name = ?, region = ?, date_description = ?, custom_summary = ?, source = ?,
-           updated_at = datetime('now', 'localtime')
+           tags = ?, updated_at = datetime('now', 'localtime')
        WHERE id = ?`
-    ).run(name, region, date_description, custom_summary, source, id);
+    ).run(name, region, date_description, custom_summary, source, tagsJson, id);
 
     const updated = db.prepare('SELECT * FROM festivals WHERE id = ?').get(id);
-    res.json(updated);
+    res.json(parseTags(updated));
   });
 
   /**

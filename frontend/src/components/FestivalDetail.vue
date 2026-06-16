@@ -8,6 +8,18 @@
     <el-descriptions v-if="festival" :column="1" border>
       <el-descriptions-item label="名称">{{ festival.name }}</el-descriptions-item>
       <el-descriptions-item label="地区">{{ festival.region }}</el-descriptions-item>
+      <el-descriptions-item label="标签">
+        <el-tag
+          v-for="tag in festival.tags"
+          :key="tag"
+          size="small"
+          :type="getTagType(tag)"
+          class="tag-item"
+        >
+          {{ tag }}
+        </el-tag>
+        <span v-if="!festival.tags || festival.tags.length === 0" class="no-tags">-</span>
+      </el-descriptions-item>
       <el-descriptions-item label="日期说明">{{ festival.date_description }}</el-descriptions-item>
       <el-descriptions-item label="习俗摘要">{{ festival.custom_summary }}</el-descriptions-item>
       <el-descriptions-item label="来源">{{ festival.source }}</el-descriptions-item>
@@ -19,7 +31,7 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   modelValue: {
     type: Boolean,
     default: false,
@@ -31,4 +43,29 @@ defineProps({
 });
 
 const emit = defineEmits(['update:modelValue']);
+
+const tagTypeMap = {
+  '民族节日': 'primary',
+  '饮食习俗': 'success',
+  '宗教祭祀': 'warning',
+  '传统庆典': 'info',
+  '体育竞技': 'danger',
+  '民间信仰': '',
+  '民间表演': 'primary',
+};
+
+function getTagType(tag) {
+  return tagTypeMap[tag] || 'info';
+}
 </script>
+
+<style scoped>
+.tag-item {
+  margin-right: 4px;
+  margin-bottom: 4px;
+}
+
+.no-tags {
+  color: #c0c4cc;
+}
+</style>

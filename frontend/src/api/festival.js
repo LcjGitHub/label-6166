@@ -7,7 +7,7 @@ const api = axios.create({
 
 /**
  * 获取节日列表
- * @param {{ region?: string }} [params]
+ * @param {{ region?: string, tag?: string }} [params]
  */
 export function fetchFestivals(params) {
   return api.get('/festivals', { params });
@@ -18,6 +18,13 @@ export function fetchFestivals(params) {
  */
 export function fetchRegions() {
   return api.get('/festivals/regions');
+}
+
+/**
+ * 获取标签列表
+ */
+export function fetchTags() {
+  return api.get('/festivals/tags');
 }
 
 /**

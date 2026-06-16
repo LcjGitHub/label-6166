@@ -13,6 +13,24 @@
       <el-form-item label="地区" prop="region">
         <el-input v-model="form.region" placeholder="如：云南" />
       </el-form-item>
+      <el-form-item label="标签" prop="tags">
+        <el-select
+          v-model="form.tags"
+          multiple
+          filterable
+          allow-create
+          default-first-option
+          placeholder="请选择或输入标签"
+          style="width: 100%"
+        >
+          <el-option
+            v-for="tag in tagOptions"
+            :key="tag"
+            :label="tag"
+            :value="tag"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="日期说明" prop="date_description">
         <el-input
           v-model="form.date_description"
@@ -42,6 +60,7 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue';
+import { useFestivalStore } from '../stores/festival';
 
 const props = defineProps({
   modelValue: {
@@ -56,12 +75,32 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'submit']);
 
+const store = useFestivalStore();
+
 const formRef = ref(null);
 const submitting = ref(false);
+
+const tagOptions = computed(() => {
+  const presetTags = [
+    '民族节日',
+    '饮食习俗',
+    '宗教祭祀',
+    '传统庆典',
+    '体育竞技',
+    '民间信仰',
+    '民间表演',
+    '泼水祈福',
+    '对歌传情',
+    '驱邪纳福',
+  ];
+  const allTags = new Set([...presetTags, ...store.tags]);
+  return Array.from(allTags).sort();
+});
 
 const emptyForm = () => ({
   name: '',
   region: '',
+  tags: [],
   date_description: '',
   custom_summary: '',
   source: '',
@@ -89,6 +128,7 @@ watch(
       form.value = {
         name: val.name,
         region: val.region,
+        tags: Array.isArray(val.tags) ? [...val.tags] : [],
         date_description: val.date_description,
         custom_summary: val.custom_summary,
         source: val.source,

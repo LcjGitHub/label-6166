@@ -7,7 +7,7 @@
           v-model="regionFilter"
           clearable
           placeholder="全部地区"
-          style="width: 180px"
+          style="width: 160px"
           @change="handleRegionChange"
         >
           <el-option label="全部地区" value="" />
@@ -16,6 +16,22 @@
             :key="region"
             :label="region"
             :value="region"
+          />
+        </el-select>
+        <span class="filter-label">标签筛选</span>
+        <el-select
+          v-model="tagFilter"
+          clearable
+          placeholder="全部标签"
+          style="width: 160px"
+          @change="handleTagChange"
+        >
+          <el-option label="全部标签" value="" />
+          <el-option
+            v-for="tag in store.tags"
+            :key="tag"
+            :label="tag"
+            :value="tag"
           />
         </el-select>
       </div>
@@ -33,10 +49,24 @@
       @row-click="openDetail"
     >
       <el-table-column prop="name" label="名称" min-width="120" />
-      <el-table-column prop="region" label="地区" width="100" />
-      <el-table-column prop="date_description" label="日期说明" min-width="200" show-overflow-tooltip />
-      <el-table-column prop="custom_summary" label="习俗摘要" min-width="240" show-overflow-tooltip />
-      <el-table-column prop="source" label="来源" min-width="180" show-overflow-tooltip />
+      <el-table-column prop="region" label="地区" width="90" />
+      <el-table-column label="标签" min-width="200">
+        <template #default="{ row }">
+          <el-tag
+            v-for="tag in row.tags"
+            :key="tag"
+            size="small"
+            :type="getTagType(tag)"
+            class="tag-item"
+          >
+            {{ tag }}
+          </el-tag>
+          <span v-if="!row.tags || row.tags.length === 0" class="no-tags">-</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="date_description" label="日期说明" min-width="180" show-overflow-tooltip />
+      <el-table-column prop="custom_summary" label="习俗摘要" min-width="220" show-overflow-tooltip />
+      <el-table-column prop="source" label="来源" min-width="160" show-overflow-tooltip />
       <el-table-column label="操作" width="260" fixed="right">
         <template #default="{ row }">
           <el-button
@@ -81,10 +111,25 @@ const store = useFestivalStore();
 const favStore = useFavoriteStore();
 
 const regionFilter = ref('');
+const tagFilter = ref('');
 const detailVisible = ref(false);
 const formVisible = ref(false);
 const currentRow = ref(null);
 const editingFestival = ref(null);
+
+const tagTypeMap = {
+  '民族节日': 'primary',
+  '饮食习俗': 'success',
+  '宗教祭祀': 'warning',
+  '传统庆典': 'info',
+  '体育竞技': 'danger',
+  '民间信仰': '',
+  '民间表演': 'primary',
+};
+
+function getTagType(tag) {
+  return tagTypeMap[tag] || 'info';
+}
 
 /**
  * 初始化数据
@@ -92,6 +137,7 @@ const editingFestival = ref(null);
 onMounted(async () => {
   try {
     await store.loadRegions();
+    await store.loadTags();
     await store.loadFestivals();
     await favStore.loadFavoritedIds();
   } catch {
@@ -105,6 +151,14 @@ onMounted(async () => {
  */
 function handleRegionChange(value) {
   store.filterByRegion(value || '');
+}
+
+/**
+ * 标签筛选变更
+ * @param {string} value
+ */
+function handleTagChange(value) {
+  store.filterByTag(value || '');
 }
 
 /**
@@ -213,6 +267,15 @@ async function handleFormSubmit(payload) {
 .filter-label {
   font-size: 14px;
   color: #606266;
+}
+
+.tag-item {
+  margin-right: 4px;
+  margin-bottom: 4px;
+}
+
+.no-tags {
+  color: #c0c4cc;
 }
 
 :deep(.el-table__row) {

@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import {
   fetchFestivals,
   fetchRegions,
+  fetchTags,
   fetchFestivalById,
   createFestival,
   updateFestival,
@@ -12,9 +13,11 @@ import {
 export const useFestivalStore = defineStore('festival', () => {
   const festivals = ref([]);
   const regions = ref([]);
+  const tags = ref([]);
   const currentFestival = ref(null);
   const loading = ref(false);
   const selectedRegion = ref('');
+  const selectedTag = ref('');
 
   /**
    * 加载地区列表
@@ -25,13 +28,26 @@ export const useFestivalStore = defineStore('festival', () => {
   }
 
   /**
-   * 加载节日列表
-   * @param {string} [region]
+   * 加载标签列表
    */
-  async function loadFestivals(region = selectedRegion.value) {
+  async function loadTags() {
+    const { data } = await fetchTags();
+    tags.value = data;
+  }
+
+  /**
+   * 加载节日列表
+   */
+  async function loadFestivals() {
     loading.value = true;
     try {
-      const params = region ? { region } : {};
+      const params = {};
+      if (selectedRegion.value) {
+        params.region = selectedRegion.value;
+      }
+      if (selectedTag.value) {
+        params.tag = selectedTag.value;
+      }
       const { data } = await fetchFestivals(params);
       festivals.value = data;
     } finally {
@@ -45,7 +61,16 @@ export const useFestivalStore = defineStore('festival', () => {
    */
   async function filterByRegion(region) {
     selectedRegion.value = region;
-    await loadFestivals(region);
+    await loadFestivals();
+  }
+
+  /**
+   * 设置标签筛选并刷新列表
+   * @param {string} tag
+   */
+  async function filterByTag(tag) {
+    selectedTag.value = tag;
+    await loadFestivals();
   }
 
   /**
@@ -65,6 +90,7 @@ export const useFestivalStore = defineStore('festival', () => {
   async function addFestival(payload) {
     await createFestival(payload);
     await loadRegions();
+    await loadTags();
     await loadFestivals();
   }
 
@@ -76,6 +102,7 @@ export const useFestivalStore = defineStore('festival', () => {
   async function editFestival(id, payload) {
     await updateFestival(id, payload);
     await loadRegions();
+    await loadTags();
     await loadFestivals();
   }
 
@@ -86,18 +113,23 @@ export const useFestivalStore = defineStore('festival', () => {
   async function removeFestival(id) {
     await deleteFestival(id);
     await loadRegions();
+    await loadTags();
     await loadFestivals();
   }
 
   return {
     festivals,
     regions,
+    tags,
     currentFestival,
     loading,
     selectedRegion,
+    selectedTag,
     loadRegions,
+    loadTags,
     loadFestivals,
     filterByRegion,
+    filterByTag,
     loadFestivalDetail,
     addFestival,
     editFestival,

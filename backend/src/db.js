@@ -167,10 +167,17 @@ async function initDb() {
       date_description TEXT NOT NULL,
       custom_summary TEXT NOT NULL,
       source TEXT NOT NULL,
+      tags TEXT DEFAULT '[]',
       created_at TEXT DEFAULT (datetime('now', 'localtime')),
       updated_at TEXT DEFAULT (datetime('now', 'localtime'))
     )
   `);
+
+  try {
+    wrapper.db.exec('ALTER TABLE festivals ADD COLUMN tags TEXT DEFAULT \'[]\'');
+  } catch (e) {
+    // 列已存在，忽略错误
+  }
 
   wrapper.db.exec(`
     CREATE TABLE IF NOT EXISTS favorites (
