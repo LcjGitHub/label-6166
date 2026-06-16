@@ -31,6 +31,8 @@
 </template>
 
 <script setup>
+import { getTagType } from '../utils/tags';
+
 const props = defineProps({
   modelValue: {
     type: Boolean,
@@ -43,20 +45,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue']);
-
-const tagTypeMap = {
-  '民族节日': 'primary',
-  '饮食习俗': 'success',
-  '宗教祭祀': 'warning',
-  '传统庆典': 'info',
-  '体育竞技': 'danger',
-  '民间信仰': '',
-  '民间表演': 'primary',
-};
-
-function getTagType(tag) {
-  return tagTypeMap[tag] || 'info';
-}
 </script>
 
 <style scoped>

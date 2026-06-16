@@ -102,6 +102,7 @@ import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useFestivalStore } from '../stores/festival';
 import { useFavoriteStore } from '../stores/favorite';
+import { getTagType } from '../utils/tags';
 import FestivalDetail from '../components/FestivalDetail.vue';
 import FestivalForm from '../components/FestivalForm.vue';
 
@@ -116,20 +117,6 @@ const detailVisible = ref(false);
 const formVisible = ref(false);
 const currentRow = ref(null);
 const editingFestival = ref(null);
-
-const tagTypeMap = {
-  '民族节日': 'primary',
-  '饮食习俗': 'success',
-  '宗教祭祀': 'warning',
-  '传统庆典': 'info',
-  '体育竞技': 'danger',
-  '民间信仰': '',
-  '民间表演': 'primary',
-};
-
-function getTagType(tag) {
-  return tagTypeMap[tag] || 'info';
-}
 
 /**
  * 初始化数据
