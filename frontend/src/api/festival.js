@@ -5,6 +5,13 @@ const api = axios.create({
   timeout: 10000,
 });
 
+/**
+ * 获取节日列表
+ * @param {object} params - 查询参数
+ * @param {string} [params.region] - 地区筛选
+ * @param {string} [params.tag] - 标签筛选
+ * @param {string} [params.keyword] - 关键词搜索（按节日名称或习俗摘要模糊匹配）
+ */
 export function fetchFestivals(params) {
   return api.get('/festivals', { params });
 }
