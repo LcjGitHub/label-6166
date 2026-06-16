@@ -13,15 +13,15 @@
           stroke-dasharray="4,4"
         />
         <text
-          v-for="i in gridLineCount"
-          :key="`label-${i}`"
+          v-for="(label, index) in yAxisLabels"
+          :key="`label-${index}`"
           :x="paddingLeft - 8"
-          :y="getGridLineY(i) + 4"
+          :y="getYAxisLabelY(index) + 4"
           text-anchor="end"
           font-size="12"
           fill="#909399"
         >
-          {{ getGridLineValue(i) }}
+          {{ label }}
         </text>
       </g>
 
@@ -126,18 +126,41 @@ const chartHeight = computed(() => svgHeight.value - paddingTop - paddingBottom)
 const maxValue = computed(() => {
   if (!props.data.length) return 10;
   const max = Math.max(...props.data.map((item) => item[props.valueKey]));
+  if (max <= 5) {
+    return max + 1;
+  }
+  if (max <= 10) {
+    return Math.ceil(max / 2) * 2;
+  }
   const step = Math.ceil(max / 5);
-  return step * 5 || 10;
+  return step * 5;
 });
 
-const gridLineCount = 5;
+const gridLineCount = computed(() => {
+  if (maxValue.value <= 6) {
+    return maxValue.value;
+  }
+  return 5;
+});
+
+const yAxisLabels = computed(() => {
+  const labels = [];
+  for (let i = 0; i <= gridLineCount.value; i++) {
+    labels.push(Math.round((maxValue.value / gridLineCount.value) * i));
+  }
+  return labels;
+});
+
+function getYAxisLabelY(index) {
+  return paddingTop + (chartHeight.value / gridLineCount.value) * (gridLineCount.value - index);
+}
 
 function getGridLineY(i) {
-  return paddingTop + (chartHeight.value / gridLineCount) * (gridLineCount - i);
+  return paddingTop + (chartHeight.value / gridLineCount.value) * (gridLineCount.value - i);
 }
 
 function getGridLineValue(i) {
-  return Math.round((maxValue.value / gridLineCount) * i);
+  return Math.round((maxValue.value / gridLineCount.value) * i);
 }
 
 const barWidth = computed(() => {

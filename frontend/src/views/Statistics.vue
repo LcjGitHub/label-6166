@@ -29,16 +29,16 @@
         </div>
       </template>
 
-      <div v-loading="store.loading" class="chart-wrapper">
+      <div v-loading="store.loading" class="chart-wrapper" ref="chartContainerRef">
         <BarChart
-          v-if="store.regionStats.length"
+          v-if="store.regionStats.length || store.loading"
           :data="store.regionStats"
           label-key="region"
           value-key="count"
           :width="chartWidth"
           :height="400"
         />
-        <el-empty v-else description="暂无数据" />
+        <el-empty v-if="!store.loading && !store.regionStats.length" description="暂无数据" />
       </div>
     </el-card>
 
@@ -76,13 +76,50 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useStatisticsStore } from '../stores/statistics';
 import BarChart from '../components/BarChart.vue';
 
 const store = useStatisticsStore();
+const chartContainerRef = ref(null);
 const chartWidth = ref(800);
+
+let resizeObserver = null;
+
+function updateChartWidth() {
+  if (chartContainerRef.value) {
+    const containerWidth = chartContainerRef.value.clientWidth;
+    chartWidth.value = Math.max(600, containerWidth);
+  }
+}
+
+function initResizeObserver() {
+  if (chartContainerRef.value && typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => {
+      updateChartWidth();
+    });
+    resizeObserver.observe(chartContainerRef.value);
+  }
+}
+
+onMounted(async () => {
+  try {
+    await store.loadRegionStats();
+  } catch {
+    ElMessage.error('加载统计数据失败，请确认后端已启动');
+  }
+  await nextTick();
+  updateChartWidth();
+  initResizeObserver();
+});
+
+onUnmounted(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = null;
+  }
+});
 
 const topRegion = computed(() => {
   if (!store.regionStats.length) return '-';
@@ -109,14 +146,6 @@ async function handleRefresh() {
     ElMessage.error('刷新失败，请确认后端已启动');
   }
 }
-
-onMounted(async () => {
-  try {
-    await store.loadRegionStats();
-  } catch {
-    ElMessage.error('加载统计数据失败，请确认后端已启动');
-  }
-});
 </script>
 
 <style scoped>
