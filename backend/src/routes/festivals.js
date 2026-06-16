@@ -254,13 +254,15 @@ function createFestivalRouter(db) {
     }
 
     const total = rows.length;
-    const offset = (pageNum - 1) * size;
+    const maxPage = total > 0 ? Math.ceil(total / size) : 1;
+    const correctedPage = Math.min(Math.max(1, pageNum), maxPage);
+    const offset = (correctedPage - 1) * size;
     const data = rows.slice(offset, offset + size);
 
     res.json({
       total,
       data,
-      page: pageNum,
+      page: correctedPage,
       pageSize: size,
     });
   });

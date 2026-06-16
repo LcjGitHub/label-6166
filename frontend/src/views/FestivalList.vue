@@ -96,8 +96,8 @@
 
     <div class="pagination-wrapper">
       <el-pagination
-        v-model:current-page="store.page"
-        v-model:page-size="store.pageSize"
+        :current-page="store.page"
+        :page-size="store.pageSize"
         :page-sizes="[10, 20, 50, 100]"
         :total="store.total"
         layout="total, sizes, prev, pager, next, jumper"

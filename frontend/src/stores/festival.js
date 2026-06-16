@@ -63,6 +63,11 @@ export const useFestivalStore = defineStore('festival', () => {
       total.value = data.total;
       page.value = data.page;
       pageSize.value = data.pageSize;
+
+      if (data.data.length === 0 && data.total > 0 && data.page > 1) {
+        page.value = 1;
+        await loadFestivals();
+      }
     } finally {
       loading.value = false;
     }
@@ -99,7 +104,12 @@ export const useFestivalStore = defineStore('festival', () => {
    * @param {number} p
    */
   async function setPage(p) {
-    page.value = p;
+    const targetPage = Number(p);
+    if (!targetPage || targetPage < 1) {
+      page.value = 1;
+    } else {
+      page.value = targetPage;
+    }
     await loadFestivals();
   }
 
@@ -108,7 +118,12 @@ export const useFestivalStore = defineStore('festival', () => {
    * @param {number} size
    */
   async function setPageSize(size) {
-    pageSize.value = size;
+    const targetSize = Number(size);
+    if (!targetSize || targetSize < 1) {
+      pageSize.value = 10;
+    } else {
+      pageSize.value = Math.min(100, targetSize);
+    }
     page.value = 1;
     await loadFestivals();
   }
