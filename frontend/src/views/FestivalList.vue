@@ -34,8 +34,15 @@
       <el-table-column prop="date_description" label="日期说明" min-width="200" show-overflow-tooltip />
       <el-table-column prop="custom_summary" label="习俗摘要" min-width="240" show-overflow-tooltip />
       <el-table-column prop="source" label="来源" min-width="180" show-overflow-tooltip />
-      <el-table-column label="操作" width="180" fixed="right">
+      <el-table-column label="操作" width="260" fixed="right">
         <template #default="{ row }">
+          <el-button
+            :link="true"
+            :type="favStore.isFavorited(row.id) ? 'warning' : 'default'"
+            @click.stop="handleToggleFavorite(row)"
+          >
+            {{ favStore.isFavorited(row.id) ? '已收藏' : '收藏' }}
+          </el-button>
           <el-button link type="primary" @click.stop="openDetail(row)">详情</el-button>
           <el-button link type="primary" @click.stop="openEdit(row)">编辑</el-button>
           <el-button link type="danger" @click.stop="handleDelete(row)">删除</el-button>
@@ -60,10 +67,12 @@
 import { ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useFestivalStore } from '../stores/festival';
+import { useFavoriteStore } from '../stores/favorite';
 import FestivalDetail from '../components/FestivalDetail.vue';
 import FestivalForm from '../components/FestivalForm.vue';
 
 const store = useFestivalStore();
+const favStore = useFavoriteStore();
 
 const regionFilter = ref('');
 const detailVisible = ref(false);
@@ -78,6 +87,9 @@ onMounted(async () => {
   try {
     await store.loadRegions();
     await store.loadFestivals();
+    if (store.festivals.length) {
+      await favStore.batchCheckFavorited(store.festivals.map((f) => f.id));
+    }
   } catch {
     ElMessage.error('加载节日数据失败，请确认后端已启动');
   }
@@ -121,6 +133,15 @@ function openEdit(row) {
  * 删除节日
  * @param {object} row
  */
+async function handleToggleFavorite(row) {
+  try {
+    await favStore.toggleFavorite(row.id);
+    ElMessage.success(favStore.isFavorited(row.id) ? '收藏成功' : '已取消收藏');
+  } catch {
+    ElMessage.error('操作失败');
+  }
+}
+
 async function handleDelete(row) {
   try {
     await ElMessageBox.confirm(`确定删除「${row.name}」吗？`, '提示', {

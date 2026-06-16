@@ -52,3 +52,19 @@ export function updateFestival(id, data) {
 export function deleteFestival(id) {
   return api.delete(`/festivals/${id}`);
 }
+
+export function fetchFavorites() {
+  return api.get('/favorites');
+}
+
+export function addFavorite(festivalId) {
+  return api.post('/favorites', { festival_id: festivalId });
+}
+
+export function removeFavorite(festivalId) {
+  return api.delete(`/favorites/${festivalId}`);
+}
+
+export function checkFavorite(festivalId) {
+  return api.get(`/favorites/check/${festivalId}`);
+}

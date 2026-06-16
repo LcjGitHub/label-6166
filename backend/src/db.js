@@ -171,6 +171,16 @@ async function initDb() {
       updated_at TEXT DEFAULT (datetime('now', 'localtime'))
     )
   `);
+
+  wrapper.db.exec(`
+    CREATE TABLE IF NOT EXISTS favorites (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      festival_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT (datetime('now', 'localtime')),
+      FOREIGN KEY (festival_id) REFERENCES festivals(id) ON DELETE CASCADE
+    )
+  `);
+
   persistDb(db);
 
   return wrapper;
