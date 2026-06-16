@@ -31,10 +31,28 @@
                 v-for="f in day.festivals"
                 :key="f.id"
                 class="festival-dot"
-                :title="f.name"
-              >{{ f.name }}</span>
+                :class="{ 'festival-lunar': f.date_type === 'lunar' }"
+                :title="f.date_note || f.name"
+              >{{ f.name }}<em v-if="f.date_note && f.date_type === 'lunar'">（{{ f.date_note }}）</em></span>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="noDayFestivals.length > 0" class="monthly-panel">
+      <h3 class="monthly-title">本月内节日</h3>
+      <div class="monthly-list">
+        <div v-for="f in noDayFestivals" :key="f.id" class="monthly-card" @click="openDetail(f)">
+          <div class="monthly-name">{{ f.name }}</div>
+          <div class="monthly-region">
+            <el-tag size="small" type="info">{{ f.region }}</el-tag>
+          </div>
+          <div class="monthly-note">
+            <el-tag size="small" type="warning">{{ f.date_note || '本月内' }}</el-tag>
+          </div>
+          <div class="monthly-date-desc">{{ f.date_description }}</div>
+          <div class="monthly-summary">{{ f.custom_summary }}</div>
         </div>
       </div>
     </div>
@@ -46,6 +64,7 @@
           <div class="detail-name">{{ f.name }}</div>
           <div class="detail-region">
             <el-tag size="small" type="info">{{ f.region }}</el-tag>
+            <el-tag v-if="f.date_note" size="small" type="warning" style="margin-left: 4px">{{ f.date_note }}</el-tag>
           </div>
           <div class="detail-date-desc">{{ f.date_description }}</div>
           <div class="detail-summary">{{ f.custom_summary }}</div>
@@ -94,20 +113,16 @@ const calendarWeeks = computed(() => {
   const daysInPrevMonth = new Date(year, month - 1, 0).getDate();
 
   const festivalMap = {};
+  const noDayFestivals = [];
   for (const f of festivals.value) {
     const day = f.parsed_day;
     if (day && day >= 1 && day <= daysInMonth) {
       const key = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       if (!festivalMap[key]) festivalMap[key] = [];
       festivalMap[key].push(f);
+    } else {
+      noDayFestivals.push(f);
     }
-  }
-
-  const noDayFestivals = festivals.value.filter((f) => !f.parsed_day);
-  if (noDayFestivals.length > 0) {
-    const firstKey = `${year}-${String(month).padStart(2, '0')}-01`;
-    if (!festivalMap[firstKey]) festivalMap[firstKey] = [];
-    festivalMap[firstKey].push(...noDayFestivals);
   }
 
   const weeks = [];
@@ -171,6 +186,10 @@ const selectedFestivals = computed(() => {
     .find((d) => d.key === selectedDate.value)?.festivals || [];
 });
 
+const noDayFestivals = computed(() => {
+  return festivals.value.filter((f) => !f.parsed_day);
+});
+
 function formatDate(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -228,6 +247,9 @@ function openDetail(festival) {
 }
 
 watch([currentYear, currentMonth], () => {
+  const year = currentYear.value;
+  const month = currentMonth.value;
+  selectedDate.value = `${year}-${String(month).padStart(2, '0')}-01`;
   loadFestivals();
 });
 
@@ -344,6 +366,81 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+}
+
+.festival-dot.festival-lunar {
+  background: rgba(230, 162, 60, 0.15);
+  color: #e6a23c;
+}
+
+.festival-dot em {
+  font-style: normal;
+  opacity: 0.8;
+  font-size: 10px;
+  margin-left: 2px;
+}
+
+.monthly-panel {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e4e7ed;
+}
+
+.monthly-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: #303133;
+}
+
+.monthly-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.monthly-card {
+  background: #fdf6ec;
+  border-radius: 8px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #f5dab1;
+}
+
+.monthly-card:hover {
+  background: #faecd8;
+  box-shadow: 0 2px 8px rgba(230, 162, 60, 0.15);
+}
+
+.monthly-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 6px;
+}
+
+.monthly-region {
+  margin-bottom: 4px;
+  display: inline-block;
+}
+
+.monthly-note {
+  margin-bottom: 6px;
+  display: inline-block;
+  margin-left: 4px;
+}
+
+.monthly-date-desc {
+  font-size: 13px;
+  color: #909399;
+  margin-bottom: 4px;
+}
+
+.monthly-summary {
+  font-size: 13px;
+  color: #606266;
+  line-height: 1.6;
 }
 
 .detail-panel {

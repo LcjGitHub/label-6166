@@ -5,63 +5,101 @@ const LUNAR_MONTH_MAP = {
   '六': 6, '七': 7, '八': 8, '九': 9, '十': 10, '腊': 12,
 };
 
-function parseMonthFromDescription(desc) {
-  if (!desc) return null;
+const CHINESE_TO_NUM = {
+  '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
+  '六': 6, '七': 7, '八': 8, '九': 9, '十': 10,
+  '十一': 11, '十二': 12, '十三': 13, '十四': 14, '十五': 15,
+  '十六': 16, '十七': 17, '十八': 18, '十九': 19, '二十': 20,
+  '二十一': 21, '二十二': 22, '二十三': 23, '二十四': 24, '二十五': 25,
+  '二十六': 26, '二十七': 27, '二十八': 28, '二十九': 29, '三十': 30,
+};
 
-  const solarMonthMatch = desc.match(/公历(?:约\s*)?(\d{1,2})\s*月/);
-  if (solarMonthMatch) return Number(solarMonthMatch[1]);
-
-  const arabicMonthMatch = desc.match(/(\d{1,2})\s*月/);
-  if (arabicMonthMatch) return Number(arabicMonthMatch[1]);
-
-  const lunarMonthMatch = desc.match(/(?:农历\s*)?(?:十[一二]|[一二三四五六七八九十腊正])月/);
-  if (lunarMonthMatch) {
-    const raw = lunarMonthMatch[0].replace(/农历\s*/, '').replace('月', '');
-    if (raw === '十一') return 11;
-    if (raw === '十二') return 12;
-    if (LUNAR_MONTH_MAP[raw]) return LUNAR_MONTH_MAP[raw];
-  }
-
-  const lunarDayMatch = desc.match(/[一二三四五六七八九十]+月初[一二三四五六七八九十]+/);
-  if (lunarDayMatch) {
-    const monthPart = lunarDayMatch[0].split('月')[0];
-    if (monthPart === '十一') return 11;
-    if (monthPart === '十二') return 12;
-    if (LUNAR_MONTH_MAP[monthPart]) return LUNAR_MONTH_MAP[monthPart];
-  }
-
-  if (/正月/.test(desc)) return 1;
-  if (/腊月/.test(desc)) return 12;
-
+function parseLunarMonth(raw) {
+  if (raw === '十一') return 11;
+  if (raw === '十二') return 12;
+  if (LUNAR_MONTH_MAP[raw]) return LUNAR_MONTH_MAP[raw];
   return null;
 }
 
-function parseDayFromDescription(desc) {
+function parseChineseNum(raw) {
+  return CHINESE_TO_NUM[raw] || null;
+}
+
+function parseDateInfo(desc) {
   if (!desc) return null;
 
-  const chineseToNum = {
-    '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
-    '六': 6, '七': 7, '八': 8, '九': 9, '十': 10,
-    '十一': 11, '十二': 12, '十三': 13, '十四': 14, '十五': 15,
-    '十六': 16, '十七': 17, '十八': 18, '十九': 19, '二十': 20,
-    '二十一': 21, '二十二': 22, '二十三': 23, '二十四': 24, '二十五': 25,
-    '二十六': 26, '二十七': 27, '二十八': 28, '二十九': 29, '三十': 30,
+  const result = {
+    months: [],
+    day: null,
+    dateType: 'unknown',
+    hasExactDay: false,
   };
 
-  const dayPatterns = [
-    /月(二十[一二三四五六七八九十]|[一二三四五六七八九十]{2,}|十[一二三四五六七八九])/,
-    /初([一二三四五六七八九十]+)/,
-    /([一二三四五六七八九十]+)日/,
-  ];
+  const solarExactMatch = desc.match(/公历(?:约\s*)?(\d{1,2})\s*月(?:(\d{1,2})\s*日)?/);
+  if (solarExactMatch) {
+    result.months.push(Number(solarExactMatch[1]));
+    result.dateType = 'solar';
+    if (solarExactMatch[2]) {
+      result.day = Number(solarExactMatch[2]);
+      result.hasExactDay = true;
+    }
+    return result;
+  }
 
-  for (const pattern of dayPatterns) {
-    const match = desc.match(pattern);
-    if (match && chineseToNum[match[1]]) {
-      return chineseToNum[match[1]];
+  const solarMonthMatch = desc.match(/(\d{1,2})\s*月/);
+  if (solarMonthMatch && !/农历|正月|腊月|[一二三四五六七八九十]月/.test(desc)) {
+    result.months.push(Number(solarMonthMatch[1]));
+    result.dateType = 'solar';
+    return result;
+  }
+
+  const lunarDates = [];
+  const lunarPattern = /([正一二三四五六七八九十腊]+)月(?:初([一二三四五六七八九十]+)|([一二三四五六七八九十]{2,}))?/g;
+  let match;
+  while ((match = lunarPattern.exec(desc)) !== null) {
+    const monthStr = match[1];
+    const dayStr = match[2] || match[3];
+    const month = parseLunarMonth(monthStr);
+    if (month) {
+      const day = dayStr ? parseChineseNum(dayStr) : null;
+      lunarDates.push({ month, day });
+      if (!result.months.includes(month)) {
+        result.months.push(month);
+      }
     }
   }
 
-  return null;
+  if (/正月/.test(desc) && !result.months.includes(1)) {
+    result.months.push(1);
+  }
+  if (/腊月/.test(desc) && !result.months.includes(12)) {
+    result.months.push(12);
+  }
+
+  if (lunarDates.length > 0) {
+    result.dateType = 'lunar';
+    const firstWithDay = lunarDates.find(d => d.day !== null);
+    if (firstWithDay) {
+      result.day = firstWithDay.day;
+      result.hasExactDay = true;
+    }
+  }
+
+  if (result.months.length === 0) {
+    return null;
+  }
+
+  return result;
+}
+
+function parseMonthFromDescription(desc) {
+  const info = parseDateInfo(desc);
+  return info && info.months.length > 0 ? info.months[0] : null;
+}
+
+function parseDayFromDescription(desc) {
+  const info = parseDateInfo(desc);
+  return info ? info.day : null;
 }
 
 function parseTags(row) {
@@ -90,13 +128,62 @@ function createFestivalRouter(db) {
 
     const rows = db.prepare('SELECT * FROM festivals').all().map(parseTags);
     const matched = rows.filter((row) => {
-      const parsed = parseMonthFromDescription(row.date_description);
-      return parsed === month;
-    }).map((row) => ({
-      ...row,
-      parsed_month: parseMonthFromDescription(row.date_description),
-      parsed_day: parseDayFromDescription(row.date_description),
-    }));
+      const parsed = parseDateInfo(row.date_description);
+      return parsed && parsed.months.includes(month);
+    }).map((row) => {
+      const parsed = parseDateInfo(row.date_description);
+      let displayDay = null;
+      let dateNote = '';
+
+      const lunarPattern = /([正一二三四五六七八九十腊]+)月(?:初([一二三四五六七八九十]+)|([一二三四五六七八九十]{2,}))?/g;
+      let lunarMatch;
+      let monthDay = null;
+      while ((lunarMatch = lunarPattern.exec(row.date_description)) !== null) {
+        const m = parseLunarMonth(lunarMatch[1]);
+        if (m === month) {
+          const dayStr = lunarMatch[2] || lunarMatch[3];
+          monthDay = dayStr ? parseChineseNum(dayStr) : null;
+          break;
+        }
+      }
+
+      if (parsed.dateType === 'lunar') {
+        const dayForNote = monthDay || parsed.day;
+        if (dayForNote) {
+          displayDay = 15;
+          dateNote = `农历${dayForNote}日前后（本月中旬）`;
+        } else {
+          displayDay = null;
+          dateNote = '本月内';
+        }
+      } else if (parsed.dateType === 'solar') {
+        if (parsed.hasExactDay) {
+          displayDay = parsed.day;
+        } else if (/中旬/.test(row.date_description)) {
+          displayDay = 15;
+          dateNote = '本月中旬';
+        } else if (/上旬/.test(row.date_description)) {
+          displayDay = 5;
+          dateNote = '本月上旬';
+        } else if (/下旬/.test(row.date_description)) {
+          displayDay = 25;
+          dateNote = '本月下旬';
+        } else {
+          displayDay = null;
+          dateNote = '本月内';
+        }
+      }
+
+      return {
+        ...row,
+        parsed_month: month,
+        parsed_day: displayDay,
+        date_type: parsed.dateType,
+        has_exact_day: parsed.hasExactDay,
+        date_note: dateNote,
+        all_months: parsed.months,
+      };
+    });
 
     res.json(matched);
   });
