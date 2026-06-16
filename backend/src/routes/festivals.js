@@ -1,5 +1,69 @@
 const express = require('express');
 
+const LUNAR_MONTH_MAP = {
+  '正': 1, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
+  '六': 6, '七': 7, '八': 8, '九': 9, '十': 10, '腊': 12,
+};
+
+function parseMonthFromDescription(desc) {
+  if (!desc) return null;
+
+  const solarMonthMatch = desc.match(/公历(?:约\s*)?(\d{1,2})\s*月/);
+  if (solarMonthMatch) return Number(solarMonthMatch[1]);
+
+  const arabicMonthMatch = desc.match(/(\d{1,2})\s*月/);
+  if (arabicMonthMatch) return Number(arabicMonthMatch[1]);
+
+  const lunarMonthMatch = desc.match(/(?:农历\s*)?(?:十[一二]|[一二三四五六七八九十腊正])月/);
+  if (lunarMonthMatch) {
+    const raw = lunarMonthMatch[0].replace(/农历\s*/, '').replace('月', '');
+    if (raw === '十一') return 11;
+    if (raw === '十二') return 12;
+    if (LUNAR_MONTH_MAP[raw]) return LUNAR_MONTH_MAP[raw];
+  }
+
+  const lunarDayMatch = desc.match(/[一二三四五六七八九十]+月初[一二三四五六七八九十]+/);
+  if (lunarDayMatch) {
+    const monthPart = lunarDayMatch[0].split('月')[0];
+    if (monthPart === '十一') return 11;
+    if (monthPart === '十二') return 12;
+    if (LUNAR_MONTH_MAP[monthPart]) return LUNAR_MONTH_MAP[monthPart];
+  }
+
+  if (/正月/.test(desc)) return 1;
+  if (/腊月/.test(desc)) return 12;
+
+  return null;
+}
+
+function parseDayFromDescription(desc) {
+  if (!desc) return null;
+
+  const chineseToNum = {
+    '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
+    '六': 6, '七': 7, '八': 8, '九': 9, '十': 10,
+    '十一': 11, '十二': 12, '十三': 13, '十四': 14, '十五': 15,
+    '十六': 16, '十七': 17, '十八': 18, '十九': 19, '二十': 20,
+    '二十一': 21, '二十二': 22, '二十三': 23, '二十四': 24, '二十五': 25,
+    '二十六': 26, '二十七': 27, '二十八': 28, '二十九': 29, '三十': 30,
+  };
+
+  const dayPatterns = [
+    /月(二十[一二三四五六七八九十]|[一二三四五六七八九十]{2,}|十[一二三四五六七八九])/,
+    /初([一二三四五六七八九十]+)/,
+    /([一二三四五六七八九十]+)日/,
+  ];
+
+  for (const pattern of dayPatterns) {
+    const match = desc.match(pattern);
+    if (match && chineseToNum[match[1]]) {
+      return chineseToNum[match[1]];
+    }
+  }
+
+  return null;
+}
+
 function parseTags(row) {
   if (row && row.tags) {
     try {
@@ -17,6 +81,25 @@ function parseTags(row) {
  */
 function createFestivalRouter(db) {
   const router = express.Router();
+
+  router.get('/by-month', (req, res) => {
+    const month = Number(req.query.month);
+    if (!month || month < 1 || month > 12) {
+      return res.status(400).json({ message: '请提供有效的月份参数 (1-12)' });
+    }
+
+    const rows = db.prepare('SELECT * FROM festivals').all().map(parseTags);
+    const matched = rows.filter((row) => {
+      const parsed = parseMonthFromDescription(row.date_description);
+      return parsed === month;
+    }).map((row) => ({
+      ...row,
+      parsed_month: parseMonthFromDescription(row.date_description),
+      parsed_day: parseDayFromDescription(row.date_description),
+    }));
+
+    res.json(matched);
+  });
 
   /**
    * 获取地区列表（用于筛选）

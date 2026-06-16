@@ -5,6 +5,7 @@
         <h1>地方民俗节日日历</h1>
         <nav class="header-nav">
           <router-link to="/" class="nav-link" active-class="nav-active" :class="{ 'nav-active': $route.path === '/' }">节日列表</router-link>
+          <router-link to="/calendar" class="nav-link" active-class="nav-active">节日月历</router-link>
           <router-link to="/favorites" class="nav-link" active-class="nav-active">我的收藏</router-link>
           <router-link to="/statistics" class="nav-link" active-class="nav-active">统计概览</router-link>
         </nav>

@@ -82,3 +82,7 @@ export function removeFavorite(festivalId) {
 export function fetchStatisticsByRegion() {
   return api.get('/statistics/by-region');
 }
+
+export function fetchFestivalsByMonth(month) {
+  return api.get('/festivals/by-month', { params: { month } });
+}

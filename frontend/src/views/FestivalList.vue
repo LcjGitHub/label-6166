@@ -46,6 +46,7 @@
         </el-select>
       </div>
       <div class="toolbar-actions">
+        <el-button type="success" plain @click="goToCalendar">月历视图</el-button>
         <el-button type="success" plain @click="goToStatistics">查看统计</el-button>
         <el-button type="primary" @click="openCreate">新增节日</el-button>
       </div>
@@ -166,6 +167,13 @@ function handleSearch() {
 function handleSearchClear() {
   searchKeyword.value = '';
   store.searchByKeyword('');
+}
+
+/**
+ * 跳转到月历视图
+ */
+function goToCalendar() {
+  router.push('/calendar');
 }
 
 /**
