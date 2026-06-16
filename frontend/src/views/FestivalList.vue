@@ -34,6 +34,16 @@
             :value="tag"
           />
         </el-select>
+        <span class="filter-label">关键词搜索</span>
+        <el-input
+          v-model="searchKeyword"
+          clearable
+          placeholder="节日名称 / 习俗摘要"
+          style="width: 220px"
+          @keyup.enter="handleSearch"
+          @clear="handleSearchClear"
+        />
+        <el-button type="primary" @click="handleSearch">查询</el-button>
       </div>
       <div class="toolbar-actions">
         <el-button type="success" plain @click="goToStatistics">查看统计</el-button>
@@ -113,6 +123,7 @@ const favStore = useFavoriteStore();
 
 const regionFilter = ref('');
 const tagFilter = ref('');
+const searchKeyword = ref('');
 const detailVisible = ref(false);
 const formVisible = ref(false);
 const currentRow = ref(null);
@@ -146,6 +157,15 @@ function handleRegionChange(value) {
  */
 function handleTagChange(value) {
   store.filterByTag(value || '');
+}
+
+function handleSearch() {
+  store.searchByKeyword(searchKeyword.value.trim());
+}
+
+function handleSearchClear() {
+  searchKeyword.value = '';
+  store.searchByKeyword('');
 }
 
 /**

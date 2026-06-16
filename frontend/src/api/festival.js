@@ -5,10 +5,6 @@ const api = axios.create({
   timeout: 10000,
 });
 
-/**
- * 获取节日列表
- * @param {{ region?: string, tag?: string }} [params]
- */
 export function fetchFestivals(params) {
   return api.get('/festivals', { params });
 }

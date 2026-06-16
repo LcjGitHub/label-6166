@@ -18,6 +18,7 @@ export const useFestivalStore = defineStore('festival', () => {
   const loading = ref(false);
   const selectedRegion = ref('');
   const selectedTag = ref('');
+  const keyword = ref('');
 
   /**
    * 加载地区列表
@@ -48,6 +49,9 @@ export const useFestivalStore = defineStore('festival', () => {
       if (selectedTag.value) {
         params.tag = selectedTag.value;
       }
+      if (keyword.value) {
+        params.keyword = keyword.value;
+      }
       const { data } = await fetchFestivals(params);
       festivals.value = data;
     } finally {
@@ -70,6 +74,11 @@ export const useFestivalStore = defineStore('festival', () => {
    */
   async function filterByTag(tag) {
     selectedTag.value = tag;
+    await loadFestivals();
+  }
+
+  async function searchByKeyword(kw) {
+    keyword.value = kw;
     await loadFestivals();
   }
 
@@ -125,11 +134,13 @@ export const useFestivalStore = defineStore('festival', () => {
     loading,
     selectedRegion,
     selectedTag,
+    keyword,
     loadRegions,
     loadTags,
     loadFestivals,
     filterByRegion,
     filterByTag,
+    searchByKeyword,
     loadFestivalDetail,
     addFestival,
     editFestival,

@@ -54,7 +54,7 @@ function createFestivalRouter(db) {
    * 获取节日列表，支持地区和标签筛选
    */
   router.get('/', (req, res) => {
-    const { region, tag } = req.query;
+    const { region, tag, keyword } = req.query;
 
     let sql = 'SELECT * FROM festivals WHERE 1=1';
     const params = [];
@@ -62,6 +62,12 @@ function createFestivalRouter(db) {
     if (region) {
       sql += ' AND region = ?';
       params.push(region);
+    }
+
+    if (keyword) {
+      sql += ' AND (name LIKE ? OR custom_summary LIKE ?)';
+      const like = `%${keyword}%`;
+      params.push(like, like);
     }
 
     sql += ' ORDER BY id ASC';
