@@ -175,10 +175,14 @@ async function initDb() {
   wrapper.db.exec(`
     CREATE TABLE IF NOT EXISTS favorites (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      festival_id INTEGER NOT NULL,
+      festival_id INTEGER NOT NULL UNIQUE,
       created_at TEXT DEFAULT (datetime('now', 'localtime')),
       FOREIGN KEY (festival_id) REFERENCES festivals(id) ON DELETE CASCADE
     )
+  `);
+
+  wrapper.db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_favorites_festival_id ON favorites(festival_id)
   `);
 
   persistDb(db);

@@ -65,12 +65,11 @@ function createFavoriteRouter(db) {
     res.status(204).send();
   });
 
-  router.get('/check/:festivalId', (req, res) => {
-    const festivalId = Number(req.params.festivalId);
-    const row = db
-      .prepare('SELECT id FROM favorites WHERE festival_id = ?')
-      .get(festivalId);
-    res.json({ favorited: Boolean(row) });
+  router.get('/ids', (_req, res) => {
+    const rows = db
+      .prepare('SELECT festival_id FROM favorites')
+      .all();
+    res.json(rows.map((row) => row.festival_id));
   });
 
   return router;

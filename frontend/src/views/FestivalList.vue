@@ -87,9 +87,7 @@ onMounted(async () => {
   try {
     await store.loadRegions();
     await store.loadFestivals();
-    if (store.festivals.length) {
-      await favStore.batchCheckFavorited(store.festivals.map((f) => f.id));
-    }
+    await favStore.loadFavoritedIds();
   } catch {
     ElMessage.error('加载节日数据失败，请确认后端已启动');
   }
@@ -150,6 +148,7 @@ async function handleDelete(row) {
       cancelButtonText: '取消',
     });
     await store.removeFestival(row.id);
+    favStore.removeFestivalFromCache(row.id);
     ElMessage.success('删除成功');
   } catch (err) {
     if (err !== 'cancel') {

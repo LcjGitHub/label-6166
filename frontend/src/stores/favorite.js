@@ -2,9 +2,9 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import {
   fetchFavorites,
+  fetchFavoriteIds,
   addFavorite,
   removeFavorite,
-  checkFavorite,
 } from '../api/festival';
 
 export const useFavoriteStore = defineStore('favorite', () => {
@@ -23,6 +23,11 @@ export const useFavoriteStore = defineStore('favorite', () => {
     }
   }
 
+  async function loadFavoritedIds() {
+    const { data } = await fetchFavoriteIds();
+    favoritedIds.value = new Set(data);
+  }
+
   async function toggleFavorite(festivalId) {
     if (favoritedIds.value.has(festivalId)) {
       await removeFavorite(festivalId);
@@ -35,27 +40,9 @@ export const useFavoriteStore = defineStore('favorite', () => {
     }
   }
 
-  async function checkFavorited(festivalId) {
-    const { data } = await checkFavorite(festivalId);
-    if (data.favorited) {
-      favoritedIds.value.add(festivalId);
-    } else {
-      favoritedIds.value.delete(festivalId);
-    }
-    return data.favorited;
-  }
-
-  async function batchCheckFavorited(ids) {
-    const results = await Promise.all(ids.map((id) => checkFavorite(id)));
-    const newSet = new Set(favoritedIds.value);
-    ids.forEach((id, i) => {
-      if (results[i].data.favorited) {
-        newSet.add(id);
-      } else {
-        newSet.delete(id);
-      }
-    });
-    favoritedIds.value = newSet;
+  function removeFestivalFromCache(festivalId) {
+    favoritedIds.value.delete(festivalId);
+    favorites.value = favorites.value.filter((f) => f.id !== festivalId);
   }
 
   function isFavorited(festivalId) {
@@ -67,9 +54,9 @@ export const useFavoriteStore = defineStore('favorite', () => {
     favoritedIds,
     loading,
     loadFavorites,
+    loadFavoritedIds,
     toggleFavorite,
-    checkFavorited,
-    batchCheckFavorited,
+    removeFestivalFromCache,
     isFavorited,
   };
 });
