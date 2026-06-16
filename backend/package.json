@@ -1,0 +1,15 @@
+{
+  "name": "festival-calendar-backend",
+  "version": "1.0.0",
+  "description": "地方民俗节日日历 - 后端 API",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node src/index.js"
+  },
+  "dependencies": {
+    "sql.js": "^1.12.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
