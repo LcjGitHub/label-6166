@@ -6,6 +6,7 @@
         <nav class="header-nav">
           <router-link to="/" class="nav-link" active-class="nav-active" :class="{ 'nav-active': $route.path === '/' }">节日列表</router-link>
           <router-link to="/favorites" class="nav-link" active-class="nav-active">我的收藏</router-link>
+          <router-link to="/statistics" class="nav-link" active-class="nav-active">统计概览</router-link>
         </nav>
       </div>
       <p class="subtitle">浏览各地传统节日，了解日期说明与民俗习俗</p>

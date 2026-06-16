@@ -68,3 +68,7 @@ export function addFavorite(festivalId) {
 export function removeFavorite(festivalId) {
   return api.delete(`/favorites/${festivalId}`);
 }
+
+export function fetchStatisticsByRegion() {
+  return api.get('/statistics/by-region');
+}

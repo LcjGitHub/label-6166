@@ -19,7 +19,10 @@
           />
         </el-select>
       </div>
-      <el-button type="primary" @click="openCreate">新增节日</el-button>
+      <div class="toolbar-actions">
+        <el-button type="success" plain @click="goToStatistics">查看统计</el-button>
+        <el-button type="primary" @click="openCreate">新增节日</el-button>
+      </div>
     </div>
 
     <el-table
@@ -65,11 +68,14 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useFestivalStore } from '../stores/festival';
 import { useFavoriteStore } from '../stores/favorite';
 import FestivalDetail from '../components/FestivalDetail.vue';
 import FestivalForm from '../components/FestivalForm.vue';
+
+const router = useRouter();
 
 const store = useFestivalStore();
 const favStore = useFavoriteStore();
@@ -99,6 +105,13 @@ onMounted(async () => {
  */
 function handleRegionChange(value) {
   store.filterByRegion(value || '');
+}
+
+/**
+ * 跳转到统计页面
+ */
+function goToStatistics() {
+  router.push('/statistics');
 }
 
 /**
@@ -184,6 +197,11 @@ async function handleFormSubmit(payload) {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .filters {

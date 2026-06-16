@@ -4,6 +4,7 @@ const { initDb } = require('./db');
 const { seedFestivals } = require('./seed');
 const { createFestivalRouter } = require('./routes/festivals');
 const { createFavoriteRouter } = require('./routes/favorites');
+const { createStatisticsRouter } = require('./routes/statistics');
 
 const PORT = 8000;
 
@@ -25,6 +26,7 @@ async function bootstrap() {
 
   app.use('/api/festivals', createFestivalRouter(db));
   app.use('/api/favorites', createFavoriteRouter(db));
+  app.use('/api/statistics', createStatisticsRouter(db));
 
   app.listen(PORT, () => {
     console.log(`后端服务已启动: http://localhost:${PORT}`);
