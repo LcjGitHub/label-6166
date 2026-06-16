@@ -19,6 +19,9 @@ export const useFestivalStore = defineStore('festival', () => {
   const selectedRegion = ref('');
   const selectedTag = ref('');
   const keyword = ref('');
+  const page = ref(1);
+  const pageSize = ref(10);
+  const total = ref(0);
 
   /**
    * 加载地区列表
@@ -42,7 +45,10 @@ export const useFestivalStore = defineStore('festival', () => {
   async function loadFestivals() {
     loading.value = true;
     try {
-      const params = {};
+      const params = {
+        page: page.value,
+        pageSize: pageSize.value,
+      };
       if (selectedRegion.value) {
         params.region = selectedRegion.value;
       }
@@ -53,7 +59,10 @@ export const useFestivalStore = defineStore('festival', () => {
         params.keyword = keyword.value;
       }
       const { data } = await fetchFestivals(params);
-      festivals.value = data;
+      festivals.value = data.data;
+      total.value = data.total;
+      page.value = data.page;
+      pageSize.value = data.pageSize;
     } finally {
       loading.value = false;
     }
@@ -65,6 +74,7 @@ export const useFestivalStore = defineStore('festival', () => {
    */
   async function filterByRegion(region) {
     selectedRegion.value = region;
+    page.value = 1;
     await loadFestivals();
   }
 
@@ -74,11 +84,32 @@ export const useFestivalStore = defineStore('festival', () => {
    */
   async function filterByTag(tag) {
     selectedTag.value = tag;
+    page.value = 1;
     await loadFestivals();
   }
 
   async function searchByKeyword(kw) {
     keyword.value = kw;
+    page.value = 1;
+    await loadFestivals();
+  }
+
+  /**
+   * 设置页码并刷新列表
+   * @param {number} p
+   */
+  async function setPage(p) {
+    page.value = p;
+    await loadFestivals();
+  }
+
+  /**
+   * 设置每页条数并刷新列表
+   * @param {number} size
+   */
+  async function setPageSize(size) {
+    pageSize.value = size;
+    page.value = 1;
     await loadFestivals();
   }
 
@@ -100,6 +131,7 @@ export const useFestivalStore = defineStore('festival', () => {
     await createFestival(payload);
     await loadRegions();
     await loadTags();
+    page.value = 1;
     await loadFestivals();
   }
 
@@ -123,6 +155,7 @@ export const useFestivalStore = defineStore('festival', () => {
     await deleteFestival(id);
     await loadRegions();
     await loadTags();
+    page.value = 1;
     await loadFestivals();
   }
 
@@ -135,12 +168,17 @@ export const useFestivalStore = defineStore('festival', () => {
     selectedRegion,
     selectedTag,
     keyword,
+    page,
+    pageSize,
+    total,
     loadRegions,
     loadTags,
     loadFestivals,
     filterByRegion,
     filterByTag,
     searchByKeyword,
+    setPage,
+    setPageSize,
     loadFestivalDetail,
     addFestival,
     editFestival,

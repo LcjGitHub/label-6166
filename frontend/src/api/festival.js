@@ -11,6 +11,9 @@ const api = axios.create({
  * @param {string} [params.region] - 地区筛选
  * @param {string} [params.tag] - 标签筛选
  * @param {string} [params.keyword] - 关键词搜索（按节日名称或习俗摘要模糊匹配）
+ * @param {number} [params.page] - 页码，默认 1
+ * @param {number} [params.pageSize] - 每页条数，默认 10
+ * @returns {Promise<{data: {total: number, data: array, page: number, pageSize: number}}>}
  */
 export function fetchFestivals(params) {
   return api.get('/festivals', { params });

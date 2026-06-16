@@ -93,6 +93,19 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <div class="pagination-wrapper">
+      <el-pagination
+        v-model:current-page="store.page"
+        v-model:page-size="store.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="store.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </div>
   </el-card>
 
   <FestivalDetail
@@ -167,6 +180,22 @@ function handleSearch() {
 function handleSearchClear() {
   searchKeyword.value = '';
   store.searchByKeyword('');
+}
+
+/**
+ * 每页条数变化
+ * @param {number} size
+ */
+function handleSizeChange(size) {
+  store.setPageSize(size);
+}
+
+/**
+ * 页码变化
+ * @param {number} p
+ */
+function handleCurrentChange(p) {
+  store.setPage(p);
 }
 
 /**
@@ -295,5 +324,11 @@ async function handleFormSubmit(payload) {
 
 :deep(.el-table__row) {
   cursor: pointer;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 </style>

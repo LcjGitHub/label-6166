@@ -221,10 +221,13 @@ function createFestivalRouter(db) {
   });
 
   /**
-   * 获取节日列表，支持地区和标签筛选
+   * 获取节日列表，支持地区、标签筛选和分页
    */
   router.get('/', (req, res) => {
-    const { region, tag, keyword } = req.query;
+    const { region, tag, keyword, page = 1, pageSize = 10 } = req.query;
+
+    const pageNum = Math.max(1, Number(page) || 1);
+    const size = Math.max(1, Math.min(100, Number(pageSize) || 10));
 
     let sql = 'SELECT * FROM festivals WHERE 1=1';
     const params = [];
@@ -250,7 +253,16 @@ function createFestivalRouter(db) {
       });
     }
 
-    res.json(rows);
+    const total = rows.length;
+    const offset = (pageNum - 1) * size;
+    const data = rows.slice(offset, offset + size);
+
+    res.json({
+      total,
+      data,
+      page: pageNum,
+      pageSize: size,
+    });
   });
 
   /**
